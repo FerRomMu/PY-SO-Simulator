@@ -4,7 +4,7 @@
 
 | Nombre y Apellido              |      Mail                      |     usuario Gitlab   |
 | -----------------------------  | ------------------------------ | -------------------  |
-|                       	     |                                |                      |
+|   Juan Cruz Insaurralde        |juancruzinsaurralde@outlook.com |     juann47          |
 |                                |                                |                      |
 |                                |                                |                      |
 

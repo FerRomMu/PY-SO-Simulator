@@ -5,7 +5,6 @@ from time import sleep
 import log
 
 
-
 ## emulates a compiled program
 class Program():
 
@@ -33,7 +32,7 @@ class Program():
             else:
                 ## a single instr (a String)
                 expanded.append(i)
-            
+
         ## now test if last instruction is EXIT
         ## if not... add an EXIT as final instruction
         last = expanded[-1]
@@ -45,12 +44,12 @@ class Program():
     def __repr__(self):
         return "Program({name}, {instructions})".format(name=self._name, instructions=self._instructions)
 
+
 # emulates the core of an Operative System
 class Kernel():
 
     def __init__(self):
         pass
-
 
     def load_program(self, program):
         # loads the program in main memory  
@@ -71,6 +70,10 @@ class Kernel():
         for i in range(0, progSize):
             HARDWARE.cpu.tick(i)
             sleep(1)
+
+    def executeBatch(self, programs):
+        for program in programs:
+            self.run(program)
 
     def __repr__(self):
         return "Kernel "

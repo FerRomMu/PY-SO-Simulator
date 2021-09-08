@@ -11,6 +11,5 @@
 
 
 ## Entregas:
-(para completar a futuro)
 
-### Práctica N:  
+### Práctica 1: Aprobada  

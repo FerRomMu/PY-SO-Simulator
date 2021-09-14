@@ -67,13 +67,32 @@ class KillInterruptionHandler(AbstractInterruptionHandler):
         HARDWARE.switchOff()
 
 
+# emulates a waiting Queue for processing
+class WaitingQueue:
+    _queue = []
+
+    # adds programs at the end of queue
+    def enqueue(self, prg):
+        self._queue.extens(prg)
+
+    # removes the first element in queue
+    def dequeue(self):
+        self._queue.remove(0)
+
+    # returns the first element in queue
+    def first(self):
+        return self._queue[0]
+
+
 # emulates the core of an Operative System
 class Kernel():
 
     def __init__(self):
         ## setup interruption handlers
         killHandler = KillInterruptionHandler(self)
+        waitingQueue = WaitingQueue(self)
         HARDWARE.interruptVector.register(KILL_INTERRUPTION_TYPE, killHandler)
+
 
     def load_program(self, program):
         # loads the program in main memory  
@@ -91,6 +110,12 @@ class Kernel():
         # set CPU program counter at program's first intruction
         HARDWARE.cpu.pc = 0
 
+    # emulates a "system call" for batch execution
+    def executeBatch(self, programs):
+        for program in programs:
+            self.run(program)
 
     def __repr__(self):
         return "Kernel "
+
+

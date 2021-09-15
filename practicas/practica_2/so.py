@@ -63,9 +63,15 @@ class KillInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
         log.logger.info(" Program Finished ")
-        # por ahora apagamos el hardware porque estamos ejecutando un solo programa
-        HARDWARE.switchOff()
-
+        #Quita el programa ya ejecutado de la cola
+        self._kernel.actualizarBatch()
+        #esta la cola vacía?
+        if(self._kernel.isEmptyBatch()):
+            #vacia entonces apago
+            HARDWARE.switchOff()
+        else:
+            #hay programas, ejecuto el proximo
+            self._kernel.run(self._kernel.siguienteEnBatch())
 
 # emulates the core of an Operative System
 class Kernel():
@@ -74,6 +80,8 @@ class Kernel():
         ## setup interruption handlers
         killHandler = KillInterruptionHandler(self)
         HARDWARE.interruptVector.register(KILL_INTERRUPTION_TYPE, killHandler)
+        #funciona como una cola de programas
+        self._batch = []
 
     def load_program(self, program):
         # loads the program in main memory  
@@ -91,6 +99,22 @@ class Kernel():
         # set CPU program counter at program's first intruction
         HARDWARE.cpu.pc = 0
 
+    def executeBatch(self, batch):
+        #inicializa la cola y corre el primer programa
+        self._batch = batch
+        self.run(self.siguienteEnBatch())
+
+    def isEmptyBatch(self):
+        #indica si la cola esta vacía
+        return self._batch == []
+
+    def actualizarBatch(self):
+        #Quita el primero de la cola
+        self._batch = self._batch[1:]
+
+    def siguienteEnBatch(self):
+        #Devuelve el primero en la cola
+        return(self._batch[0])
 
     def __repr__(self):
         return "Kernel "

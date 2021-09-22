@@ -30,8 +30,15 @@ if __name__ == '__main__':
     prg3 = Program("prg3.exe", [ASM.CPU(3)])
 
     batch = [prg1, prg2, prg3]
+
+    wQueue = WaitQueue()
+
     # execute the program
     kernel.executeBatch(batch)
+
+
+
+
 
 
 

@@ -20,9 +20,6 @@ if __name__ == '__main__':
     # "booteamos" el sistema operativo
     kernel = Kernel()
 
-    ##  create a program
-    prg = Program("test.exe", [ASM.CPU(2), ASM.IO(), ASM.CPU(3), ASM.IO(), ASM.CPU(3)])
-
     # Ahora vamos a intentar ejecutar un lote (batch) de 3 programas
     ###################
     prg1 = Program("prg1.exe", [ASM.CPU(2), ASM.IO(), ASM.CPU(3)])
@@ -30,17 +27,8 @@ if __name__ == '__main__':
     prg3 = Program("prg3.exe", [ASM.CPU(3)])
 
     batch = [prg1, prg2, prg3]
-
-    wQueue = WaitQueue()
-
     # execute the program
     kernel.executeBatch(batch)
-
-
-
-
-
-
 
 
 

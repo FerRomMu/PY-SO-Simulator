@@ -117,6 +117,34 @@ class IoOutInterruptionHandler(AbstractInterruptionHandler):
         log.logger.info(self.kernel.ioDeviceController)
 
 
+
+class ReadyQueue():
+
+    def __init__(self):
+        self._readyQueue = []
+
+    # indica si la cola está vacía
+    def isEmpty(self):
+        return not self._readyQueue
+
+    # agrega un programa al final de la cola
+    def enqueue(self, program):
+        self._readyQueue.append(program)
+
+    # remueve el primer elemento de la cola
+    def dequeue(self):
+        if not self.isEmpty():
+            self._readyQueue.pop(0)
+
+    # devuelve el primer elemento de la cola
+    def first(self):
+        if not self.isEmpty():
+            return self._readyQueue[0]
+
+    @property
+    def readyQueue(self):
+        return self._readyQueue
+
 # emulates the core of an Operative System
 class Kernel():
 
@@ -133,6 +161,9 @@ class Kernel():
 
         ## controls the Hardware's I/O Device
         self._ioDeviceController = IoDeviceController(HARDWARE.ioDevice)
+
+        # cola de listos para ciclo de ejecución multiprogramación
+        self._readyQueue = ReadyQueue()
 
 
     @property

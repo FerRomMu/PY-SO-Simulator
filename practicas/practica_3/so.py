@@ -243,6 +243,9 @@ class Kernel():
         # cola de listos para ciclo de ejecución multiprogramación
         self._readyQueue = ReadyQueue()
 
+        # tabla PCB
+        self._pcbTable = PCBTable()
+
 
     @property
     def ioDeviceController(self):

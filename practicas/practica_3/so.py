@@ -145,6 +145,41 @@ class ReadyQueue():
     def readyQueue(self):
         return self._readyQueue
 
+
+class PCB():
+
+    def __init__(self, pid, baseDir, pc, state, path):
+        self._pid = pid
+        self._baseDir = baseDir
+        self._pc = pc
+        self._state = state
+        self._path = path
+
+    @property
+    def pid(self):
+        return self._pid
+
+    @property
+    def baseDir(self):
+        return self._baseDir
+
+    @property
+    def pc(self):
+        return self._pc
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def path(self):
+        return self._path
+
+    # setter para cambiar de estado
+    @state.setter
+    def state(self, newState):
+        self._state = newState
+
 # emulates the core of an Operative System
 class Kernel():
 

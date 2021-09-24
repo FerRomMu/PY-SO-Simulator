@@ -180,6 +180,49 @@ class PCB():
     def state(self, newState):
         self._state = newState
 
+class PCBTable():
+
+    def __init__(self):
+        self._pcbTable = []
+        self._runningPCB = None
+        self._pidNr = -1
+
+    # indica si el pcbTable es vacío
+    def isEmpty(self):
+        return not self._pcbTable
+
+    # devuelve el pcb con pid
+    def get(self, pid):
+        i = 0
+        while self._pcbTable[i].pid != pid and not self.isEmpty():
+            i += 1
+        return self._pcTable[i].pid
+
+    # agrega un pcb a la tabla
+    def add(self, pcb):
+        self._pcbTable.append(pcb)
+
+    # elimina el pcb con pid de la tabla
+    def remove(self, pid):
+        i = 0
+        while self._pcbTable[i].pid != pid and not self.isEmpty():
+            i += 1
+        self._pcTable.pop(i)
+
+    @property
+    def runningPCB(self):
+        return self._runningPCB
+
+    @runningPCB.setter
+    def runningPCB(self, pcb):
+        self._runningPCB = pcb
+
+    # devuelve el número único de pid a asignar
+    def getNewPID(self):
+        self._pidNr += 1
+        return self._pidNr
+
+
 # emulates the core of an Operative System
 class Kernel():
 

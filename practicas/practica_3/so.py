@@ -3,6 +3,11 @@
 from hardware import *
 import log
 
+#Estos son estados de pcb
+RUNNING = 2
+READY = 1
+NEW = 0
+WAITING = 3
 
 ## emulates a compiled program
 class Program():
@@ -104,13 +109,13 @@ class NewInterruptionHandler(AbstractInterruptionHandler):
         self.kernel.pcbTable().add(pcb)
 
         # ejecucion
-        if self.kernel.pcbTable().runningPCB():
-            pcb.state("READY")
+        if self.kernel.pcbTable().isRunningPCB():
+            pcb.setState(READY)
             self.kernel.readyQueue().enqueue(pcb)
         else:
-            pcb.state("RUNNING")
+            pcb.setState(RUNNING)
             self.kernel.dispatcher().load(pcb)
-            self.kernel.pcbTable().runningPCB(pcb)
+            self.kernel.pcbTable().setRunningPCB(pcb)
 
 
 class KillInterruptionHandler(AbstractInterruptionHandler):
@@ -172,7 +177,7 @@ class PCB():
         self._pid = pid
         self._baseDir = baseDir
         self._pc = 0
-        self._state = "NEW"
+        self._state = NEW
         self._path = path
 
     @property
@@ -196,8 +201,8 @@ class PCB():
         return self._path
 
     # setter para cambiar de estado
-    @state.setter
-    def state(self, newState):
+    ##@state.setter
+    def setState(self, newState):
         self._state = newState
 
 
@@ -234,14 +239,17 @@ class PCBTable():
     def runningPCB(self):
         return self._runningPCB
 
-    @runningPCB.setter
-    def runningPCB(self, pcb):
+    ##@setRunningPCB.setter
+    def setRunningPCB(self, pcb):
         self._runningPCB = pcb
 
-    # devuelve el número único de pid a asignar
+    def isRunningPCB(self):
+        return self._runningPCB is not None
+
     def getNewPID(self):
         self._pidNr += 1
         return self._pidNr
+    # devuelve el número único de pid a asignar
 
 
 class Loader():

@@ -98,6 +98,25 @@ class AbstractInterruptionHandler():
     def execute(self, irq):
         log.logger.error("-- EXECUTE MUST BE OVERRIDEN in class {classname}".format(classname=self.__class__.__name__))
 
+    # método para correr siguiente ciclo en #KILL #IO_IN
+    def runNextCicle(self):
+        if not self.kernel.readyQueue().isEmpty():         # si hay un proceso en espera
+            nextPCB = self.kernel.readyQueue().dequeue()   # se desencola de la ready queue
+            nextPCB.setState(RUNNING)                      # cambia el estado a running
+            self.kernel.dispatcher().load(nextPCB)         # se carga en memoria
+            self.kernel.pcbTable().setRunningPCB(nextPCB)  # se establece como el running pcb
+
+    # método para correr o dejar en readyQueue proceso en #NEW #IO_OUT
+    def runNextProcess(self, pcb):
+        if self.kernel.pcbTable().isRunningPCB():
+            pcb.setState(READY)
+            self.kernel.readyQueue().enqueue(pcb)
+        else:
+            pcb.setState(RUNNING)
+            self.kernel.dispatcher().load(pcb)
+            self.kernel.pcbTable().setRunningPCB(pcb)
+
+
 
 class NewInterruptionHandler(AbstractInterruptionHandler):
 
@@ -110,13 +129,7 @@ class NewInterruptionHandler(AbstractInterruptionHandler):
         self.kernel.pcbTable().add(pcb)
 
         # ejecucion
-        if self.kernel.pcbTable().isRunningPCB():
-            pcb.setState(READY)
-            self.kernel.readyQueue().enqueue(pcb)
-        else:
-            pcb.setState(RUNNING)
-            self.kernel.dispatcher().load(pcb)
-            self.kernel.pcbTable().setRunningPCB(pcb)
+        self.runNextProcess(pcb)
 
 
 class KillInterruptionHandler(AbstractInterruptionHandler):
@@ -129,12 +142,8 @@ class KillInterruptionHandler(AbstractInterruptionHandler):
         pcb.setState(TERMINATED)
         self.kernel.pcbTable().setRunningPCB(None)
 
-        if not self.kernel.readyQueue().isEmpty():         # si hay un proceso en espera
-            nextPCB = self.kernel.readyQueue().dequeue()   # se desencola de la ready queue
-            nextPCB.setState(RUNNING)                      # cambia el estado a running
-            self.kernel.dispatcher().load(nextPCB)         # se carga en memoria
-            self.kernel.pcbTable().setRunningPCB(nextPCB)  # se establece como el running pcb
-
+        # siguiente ciclo de ejecución (si hay procesos en readyQueue)
+        self.runNextCicle()
 
 
 class IoInInterruptionHandler(AbstractInterruptionHandler):

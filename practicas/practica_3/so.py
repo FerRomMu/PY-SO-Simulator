@@ -4,10 +4,11 @@ from hardware import *
 import log
 
 #Estos son estados de pcb
-RUNNING = 2
-READY = 1
-NEW = 0
-WAITING = 3
+RUNNING = 'RUNNING'
+READY = 'READY'
+NEW = 'NEW'
+WAITING = 'WAITING'
+TERMINATED = 'TERMINATED'
 
 ## emulates a compiled program
 class Program():
@@ -122,7 +123,18 @@ class KillInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
         log.logger.info(" Program Finished ")
-        HARDWARE.cpu.pc = -1  ## dejamos el CPU IDLE
+        HARDWARE.cpu.pc = -1
+        pcb = self.kernel.pcbTable().runningPCB
+        self.kernel.dispatcher().save(pcb)
+        pcb.setState(TERMINATED)
+        self.kernel.pcbTable().setRunningPCB(None)
+
+        if not self.kernel.readyQueue().isEmpty():         # si hay un proceso en espera
+            nextPCB = self.kernel.readyQueue().dequeue()   # se desencola de la ready queue
+            nextPCB.setState(RUNNING)                      # cambia el estado a running
+            self.kernel.dispatcher().load(nextPCB)         # se carga en memoria
+            self.kernel.pcbTable().setRunningPCB(nextPCB)  # se establece como el running pcb
+
 
 
 class IoInInterruptionHandler(AbstractInterruptionHandler):
@@ -205,6 +217,9 @@ class PCB():
     def setState(self, newState):
         self._state = newState
 
+    def setBaseDir(self, baseDir):
+        self._baseDir = baseDir
+
 
 class PCBTable():
 
@@ -274,7 +289,7 @@ class Dispatcher():
         HARDWARE.mmu.baseDir = pcb.baseDir
 
     def save(self, pcb):
-        pcb.baseDir += HARDWARE.cpu.pc
+        pcb.setBaseDir(pcb.baseDir + HARDWARE.cpu.pc)
         HARDWARE.cpu.pc = -1
 
 

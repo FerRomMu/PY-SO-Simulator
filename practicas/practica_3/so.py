@@ -4,11 +4,11 @@ from hardware import *
 import log
 
 #Estos son estados de pcb
-RUNNING = 'RUNNING'
-READY = 'READY'
-NEW = 'NEW'
-WAITING = 'WAITING'
-TERMINATED = 'TERMINATED'
+RUNNING = "RUNNING"
+READY = "READY"
+NEW = "NEW"
+WAITING = "WAITING"
+TERMINATED = "TERMINATED"
 
 ## emulates a compiled program
 class Program():
@@ -101,7 +101,8 @@ class AbstractInterruptionHandler():
     # método para correr siguiente ciclo en #KILL #IO_IN
     def runNextCicle(self):
         if not self.kernel.readyQueue().isEmpty():         # si hay un proceso en espera
-            nextPCB = self.kernel.readyQueue().dequeue()   # se desencola de la ready queue
+            nextPCB = self.kernel.readyQueue().first()     # el primer pcb en la readyQueue
+            self.kernel.readyQueue().dequeue()             # se desencola de la readyQueue
             nextPCB.setState(RUNNING)                      # cambia el estado a running
             self.kernel.dispatcher().load(nextPCB)         # se carga en memoria
             self.kernel.pcbTable().setRunningPCB(nextPCB)  # se establece como el running pcb
@@ -115,7 +116,6 @@ class AbstractInterruptionHandler():
             pcb.setState(RUNNING)
             self.kernel.dispatcher().load(pcb)
             self.kernel.pcbTable().setRunningPCB(pcb)
-
 
 
 class NewInterruptionHandler(AbstractInterruptionHandler):
@@ -135,6 +135,7 @@ class NewInterruptionHandler(AbstractInterruptionHandler):
 class KillInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
+        # fin de proceso
         log.logger.info(" Program Finished ")
         HARDWARE.cpu.pc = -1
         pcb = self.kernel.pcbTable().runningPCB
@@ -150,18 +151,29 @@ class IoInInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
         operation = irq.parameters
-        pcb = {'pc': HARDWARE.cpu.pc}  # porque hacemos esto ???
-        HARDWARE.cpu.pc = -1  ## dejamos el CPU IDLE
+        pcb = self.kernel.pcbTable().runningPCB
+        self.kernel.dispatcher().save(pcb)
+        self.kernel.pcbTable().setRunningPCB(None)
+        pcb.setState(WAITING)
+
+        # ejecución en el IoDevice
         self.kernel.ioDeviceController.runOperation(pcb, operation)
         log.logger.info(self.kernel.ioDeviceController)
+
+        # siguiente proceso esperando tiempo de CPU
+        self.runNextCicle()
 
 
 class IoOutInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
         pcb = self.kernel.ioDeviceController.getFinishedPCB()
-        HARDWARE.cpu.pc = pcb['pc']
+
         log.logger.info(self.kernel.ioDeviceController)
+
+        #siguiente
+        self.runNextProcess(pcb)
+
 
 
 class ReadyQueue():

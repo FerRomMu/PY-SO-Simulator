@@ -101,10 +101,10 @@ class AbstractInterruptionHandler():
     # método para correr siguiente ciclo en #KILL #IO_IN
     def runNextCicle(self):
         if not self.kernel.readyQueue().isEmpty():         # si hay un proceso en espera
-            nextPCB = self.kernel.readyQueue().first()     # el primer pcb en la readyQueue
-            self.kernel.readyQueue().dequeue()             # se desencola de la readyQueue
+            nextPCB = self.kernel.readyQueue().dequeue()     # el primer pcb en la readyQueue
+            #self.kernel.readyQueue().dequeue()              se desencola de la readyQueue
             nextPCB.setState(RUNNING)                      # cambia el estado a running
-            self.kernel.dispatcher().load(nextPCB)         # se carga en memoria
+            self.kernel.dispatcher().load(nextPCB)         # se carga el proceso a correr
             self.kernel.pcbTable().setRunningPCB(nextPCB)  # se establece como el running pcb
 
     # método para correr o dejar en readyQueue proceso en #NEW #IO_OUT
@@ -125,7 +125,7 @@ class NewInterruptionHandler(AbstractInterruptionHandler):
         prg = irq.parameters
         baseDir = self.kernel.loader().load(prg)
         pid = self.kernel.pcbTable().getNewPID()
-        pcb = PCB(pid, baseDir, path=prg.name)
+        pcb = PCB(pid, baseDir, prg.name)
         self.kernel.pcbTable().add(pcb)
 
         # ejecucion
@@ -137,7 +137,6 @@ class KillInterruptionHandler(AbstractInterruptionHandler):
     def execute(self, irq):
         # fin de proceso
         log.logger.info(" Program Finished ")
-        HARDWARE.cpu.pc = -1
         pcb = self.kernel.pcbTable().runningPCB
         self.kernel.dispatcher().save(pcb)
         pcb.setState(TERMINATED)
@@ -192,7 +191,7 @@ class ReadyQueue():
     # remueve el primer elemento de la cola
     def dequeue(self):
         if not self.isEmpty():
-            self._readyQueue.pop(0)
+            return self._readyQueue.pop(0)
 
     # devuelve el primer elemento de la cola
     def first(self):
@@ -238,9 +237,11 @@ class PCB():
     def setState(self, newState):
         self._state = newState
 
-    def setBaseDir(self, baseDir):
-        self._baseDir = baseDir
+    def setPc(self, pc):
+        self._pc = pc
 
+    def __repr__(self):
+        return "PCB {}".format(self.pid)
 
 class PCBTable():
 
@@ -306,11 +307,13 @@ class Loader():
 class Dispatcher():
 
     def load(self, pcb):
-        HARDWARE.cpu.pc = 0
+        log.logger.info("Cargando PCB: {} ".format(pcb))
+        HARDWARE.cpu.pc = pcb.pc
         HARDWARE.mmu.baseDir = pcb.baseDir
 
     def save(self, pcb):
-        pcb.setBaseDir(pcb.baseDir + HARDWARE.cpu.pc)
+        log.logger.info("Actualizando PCB: {} ".format(pcb))
+        pcb.setPc(HARDWARE.cpu.pc)
         HARDWARE.cpu.pc = -1
 
 

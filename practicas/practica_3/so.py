@@ -297,11 +297,12 @@ class Loader():
     def load(self, prg):
         # loads the program in main memory
         progSize = len(prg.instructions)
+        baseDir = self._nextDir
         for index in range(0, progSize):
             inst = prg.instructions[index]
             HARDWARE.memory.write(index + self._nextDir, inst)
         self._nextDir += progSize
-        return self._nextDir - progSize
+        return baseDir
 
 
 class Dispatcher():

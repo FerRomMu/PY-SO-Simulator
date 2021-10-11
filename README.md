@@ -20,8 +20,9 @@
 
 
 
-### Práctica 3: Pendiente
+### Práctica 3: Aprobada 
 
+<details><summary>Corregido</summary>
 Les esta funcionando pero no es lo que debe hacer... hay un tema en el dispatcher que me parece los confunde (hablemoslo en clase)
 
 >  El BaseDir del Proceso no cambia (esta siempre cargado en el mismo lugar) ... lo que va cambiando es el pc (la instruccion a ejecutar)
@@ -41,6 +42,10 @@ Les esta funcionando pero no es lo que debe hacer... hay un tema en el dispatche
 
  esto no es necesario (lo tiene que hacer el Dispatcher) - saquen esta linea
 https://gitlab.com/so-unq-2021-s2/grupo_5/-/blob/main/practicas/practica_3/so.py#L140     
+
+
+</details>
+
 
 
 ##### Algunos Comentarios: (no es que esto esté mal, los pueden hacer en la P4)

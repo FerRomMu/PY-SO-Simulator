@@ -135,6 +135,7 @@ class AbstractInterruptionHandler():
 
     # pone a correr un pcb
     def runProcess(self, pcb):
+        HARDWARE.timer.reset()
         pcb.setState(RUNNING)                    # cambia estado de pcb a running
         self.kernel.dispatcher.load(pcb)         # carga el pcb en memoria
         self.kernel.pcbTable.setRunningPCB(pcb)  # establece el pcb como runningPCB
@@ -195,6 +196,16 @@ class IoOutInterruptionHandler(AbstractInterruptionHandler):
 
         #siguiente
         self.runNextProcess(pcb)
+
+class TimeoutInterruptionHandler(AbstractInterruptionHandler):
+
+    def execute(self, irq):
+        HARDWARE.timer.reset()
+        if not self.kernel.scheduler.isEmptyQ():
+            nextPCB = self.kernel.scheduler.getNext()
+            self.contextSwitch(nextPCB)
+
+
 
 class PCB():
 
@@ -369,6 +380,16 @@ class PreemptivePriorityScheduler(PriorityScheduler):
         return pcbInCPU.priority > pcbToAdd.priority
 
 
+class RoundRobin(Scheduler):
+
+    def __init__(self, kernel, quantum):
+        Scheduler.__init__(self, kernel)
+        HARDWARE.timer.quantum = quantum
+
+    def add(self, pcb):
+        self.enqueue(pcb)
+
+
 # emulates the core of an Operative System
 class Kernel():
 
@@ -386,6 +407,9 @@ class Kernel():
         newHandler = NewInterruptionHandler(self)
         HARDWARE.interruptVector.register(NEW_INTERRUPTION_TYPE, newHandler)
 
+        timeoutHandler = TimeoutInterruptionHandler(self)
+        HARDWARE.interruptVector.register(TIMEOUT_INTERRUPTION_TYPE, timeoutHandler)
+
         ## controls the Hardware's I/O Device
         self._ioDeviceController = IoDeviceController(HARDWARE.ioDevice)
 
@@ -399,7 +423,7 @@ class Kernel():
         self._dispatcher = Dispatcher()
 
         # scheduler
-        self._scheduler = PriorityScheduler(self)
+        self._scheduler = RoundRobin(self, 3)
 
 
 

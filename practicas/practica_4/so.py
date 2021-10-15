@@ -328,13 +328,8 @@ class Dispatcher():
 
 class Scheduler():
 
-    def __init__(self, kernel):
-        self._kernel = kernel
+    def __init__(self):
         self._readyQ = []
-
-    @property
-    def kernel(self):
-        return self._kernel
 
     # indica si la cola está vacía
     def isEmptyQ(self):
@@ -369,10 +364,9 @@ class PriorityScheduler(Scheduler):
     def add(self, pcb):
         i = 0
         size = len(self._readyQ)
-        while i != size and self._readyQ[i].priority < pcb.priority:
+        while i != size and self._readyQ[i].priority <= pcb.priority:
             i += 1
         self._readyQ.insert(i, pcb)
-
 
 class PreemptivePriorityScheduler(PriorityScheduler):
 
@@ -382,18 +376,17 @@ class PreemptivePriorityScheduler(PriorityScheduler):
 
 class RoundRobin(Scheduler):
 
-    def __init__(self, kernel, quantum):
-        Scheduler.__init__(self, kernel)
+    def __init__(self, quantum):
+        Scheduler.__init__(self)
         HARDWARE.timer.quantum = quantum
 
     def add(self, pcb):
         self.enqueue(pcb)
 
-
 # emulates the core of an Operative System
 class Kernel():
 
-    def __init__(self):
+    def __init__(self, sch):
         ## setup interruption handlers
         killHandler = KillInterruptionHandler(self)
         HARDWARE.interruptVector.register(KILL_INTERRUPTION_TYPE, killHandler)
@@ -423,7 +416,7 @@ class Kernel():
         self._dispatcher = Dispatcher()
 
         # scheduler
-        self._scheduler = RoundRobin(self, 3)
+        self._scheduler = sch
 
 
 
@@ -435,10 +428,6 @@ class Kernel():
     @property
     def pcbTable(self):
         return self._pcbTable
-
-    @property
-    def readyQueue(self):
-        return self._readyQueue
 
     @property
     def dispatcher(self):

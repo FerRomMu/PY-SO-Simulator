@@ -16,9 +16,13 @@ if __name__ == '__main__':
     ## Switch on computer
     HARDWARE.switchOn()
 
+    lista1 = [[2,3],[4]]
+
+    log.logger.info(lista1[0][1]) ##primero lista, luego elementos de esa lista
+
     ## new create the Operative System Kernel
     # "booteamos" el sistema operativo
-    schedule = PriorityScheduler()
+    schedule = PreemptivePriorityScheduler(True, 2)
     kernel = Kernel(schedule)
 
     # Ahora vamos a intentar ejecutar 3 programas a la vez

@@ -1,5 +1,6 @@
 from hardware import *
 from so import *
+from designer import *
 import log
 
 
@@ -8,17 +9,14 @@ import log
 ##
 if __name__ == '__main__':
     log.setupLogger()
-    log.logger.info('Starting emulator')
-
-    ## setup our hardware and set memory size to 25 "cells"
+    DESIGNER.title('Starting emulator')
+    DESIGNER.printBar()
+    # setup our hardware and set memory size to 25 "cells"
     HARDWARE.setup(25)
 
     ## Switch on computer
     HARDWARE.switchOn()
-
-    lista1 = [[2,3],[4]]
-
-    log.logger.info(lista1[0][1]) ##primero lista, luego elementos de esa lista
+    HARDWARE.cpu.enable_stats = True    # habilita flag enable_stats
 
     ## new create the Operative System Kernel
     # "booteamos" el sistema operativo

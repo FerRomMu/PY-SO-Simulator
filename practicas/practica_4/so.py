@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from hardware import *
+from designer import *
 import log
 
 #Estos son estados de pcb
@@ -197,6 +198,7 @@ class IoOutInterruptionHandler(AbstractInterruptionHandler):
         #siguiente
         self.runNextProcess(pcb)
 
+
 class TimeoutInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
@@ -205,6 +207,11 @@ class TimeoutInterruptionHandler(AbstractInterruptionHandler):
             nextPCB = self.kernel.scheduler.getNext()
             self.contextSwitch(nextPCB)
 
+
+class StatInterruptionHandler(AbstractInterruptionHandler):
+
+    def execute(self, irq):
+        DESIGNER.printGantt(self.kernel.pcbTable)
 
 
 class PCB():
@@ -426,6 +433,9 @@ class Kernel():
 
         timeoutHandler = TimeoutInterruptionHandler(self)
         HARDWARE.interruptVector.register(TIMEOUT_INTERRUPTION_TYPE, timeoutHandler)
+
+        statHandler = StatInterruptionHandler(self)
+        HARDWARE.interruptVector.register(STAT_INTERRUPTION_TYPE, statHandler)
 
         ## controls the Hardware's I/O Device
         self._ioDeviceController = IoDeviceController(HARDWARE.ioDevice)

@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger()
 
+
 def setupLogger():
     ## Configure Logger
     handler = logging.StreamHandler()

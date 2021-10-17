@@ -129,6 +129,7 @@ class AbstractInterruptionHandler():
     # hay un pcb en estado running en la pcbTable
     def contextSwitch(self, pcbToAdd):
         exPCB = self.kernel.pcbTable.runningPCB
+        exPCB.setState(READY)
         self.kernel.dispatcher.save(exPCB)        # guarda el estado pcb (actualiza el pc)
         self.kernel.scheduler.add(exPCB)          # lo agrega a la readyQ
         self.runProcess(pcbToAdd)                 # corre el siguiente pcb

@@ -363,7 +363,6 @@ class Scheduler():
     def mustExpropiate(self, pcbInCPU, pcbToAdd):
         return False
 
-
 class FCFSScheduler(Scheduler):
 
     def add(self, pcb):

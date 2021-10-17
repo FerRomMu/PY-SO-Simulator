@@ -18,9 +18,17 @@ if __name__ == '__main__':
     HARDWARE.switchOn()
     HARDWARE.cpu.enable_stats = True    # habilita flag enable_stats
 
-    ## new create the Operative System Kernel
+    # ---**Selecionamos un SCHEDULER**---
+    # FCFSScheduler()
+    # PriorityScheduler()  #sin aging
+    # PriorityScheduler(True, ticksParaAumentarAge) #con aging
+    # PreemptivePriorityScheduler()  #sin aging
+    # PreemptivePriorityScheduler(True, ticksParaAumentarAge) #con aging
+    # RoundRobin(Quantums)
+    schedule = RoundRobin(3)
+
+    # new create the Operative System Kernel
     # "booteamos" el sistema operativo
-    schedule = PreemptivePriorityScheduler()
     kernel = Kernel(schedule)
 
     # Ahora vamos a intentar ejecutar 3 programas a la vez
@@ -33,7 +41,3 @@ if __name__ == '__main__':
     kernel.run(prg1, 3)
     kernel.run(prg2, 6)
     kernel.run(prg3, 1)
-
-
-
-

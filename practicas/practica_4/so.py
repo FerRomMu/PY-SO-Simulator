@@ -211,7 +211,7 @@ class TimeoutInterruptionHandler(AbstractInterruptionHandler):
 class StatInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
-        DESIGNER.printGantt(self.kernel.pcbTable)
+        DESIGNER.printGantt(self.kernel.pcbTable, HARDWARE.clock.currentTick)
 
 
 class PCB():
@@ -303,6 +303,9 @@ class PCBTable():
         self._pidNr += 1
         return self._pidNr
     # devuelve el número único de pid a asignar
+
+    def allPCBs(self):
+        return self._pcbTable
 
 
 class Loader():

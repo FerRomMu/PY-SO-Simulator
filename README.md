@@ -64,3 +64,9 @@ https://gitlab.com/so-unq-2021-s2/grupo_5/-/blob/main/practicas/practica_3/so.py
      ... cargo las instrucciones en memoria ...
      return baseDir
 ```
+
+
+
+
+### Práctica 4: Aprobada 
+

@@ -417,6 +417,57 @@ class RoundRobin(Scheduler):
     def add(self, pcb):
         self.enqueue(pcb)
 
+class MemoryManager():
+
+    def __init__(self, frameSize):
+        self._frameSize = frameSize
+        self._freeMemory = HARDWARE.memory.size
+        self._freeFrames = self.generateFrames()
+
+
+    # genera los frames iniciales
+    def generateFrames(self):
+        frameAmount = self._freeMemory // self._frameSize   # // es para div entera
+        freeFrames = []
+        while frameAmount != 0:
+            freeFrames.insert(0, frameAmount - 1)
+            frameAmount -= 1
+        return freeFrames
+
+    def allocFrames(self, frames):
+        if self.framesAvailable() >= frames:                             # si el nr de frames está disponible
+            allocatedFrames = self._freeFrames[:frames]                  # guarda los frames a utilizar por el proceso
+            log.logger.info("allocatedFr = {}".format(allocatedFrames))  # los muestra en pantalla
+            del self._freeFrames[:frames]                                # los saca de los frames libres
+            log.logger.info("freeFrames = {}".format(self._freeFrames))  # muestra los frames libres restantes
+            return allocatedFrames                                       # retorna los frames a utilizar
+        else:
+            # si no hay frames disponibles lanza excepción
+            raise Exception("memory full: frames available = {fa}, required frames = {fr}".format(fa=self.framesAvailable(), fr=frames))
+
+    def freeMemory(self):
+        return self._freeFrames * self._frameSize
+
+    @property
+    def frameSize(self):
+        return self._frameSize
+
+    @property
+    def freeFrames(self):
+        return self._freeFrames
+
+    def freeFrames(self, frames):
+        for frame in frames:
+            self._freeFrames.insert(0, frame)
+        log.logger.info("freeFrames = {}".format(self._freeFrames))  # muestra los frames libres restantes
+
+    def framesAvailable(self):
+        return len(self._freeFrames)
+
+
+
+
+
 # emulates the core of an Operative System
 class Kernel():
 

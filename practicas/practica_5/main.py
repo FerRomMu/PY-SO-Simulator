@@ -21,6 +21,9 @@ if __name__ == '__main__':
 
     kernel = Kernel(FCFSScheduler)
 
+    mm = MemoryManager(5)
+    usados = mm.allocFrames(2)
+    mm.freeFrames(usados)
 
     # Ahora vamos a intentar ejecutar 3 programas a la vez
     ##################
@@ -28,14 +31,17 @@ if __name__ == '__main__':
     prg2 = Program("prg2.exe", [ASM.CPU(7)])
     prg3 = Program("prg3.exe", [ASM.CPU(4), ASM.IO(), ASM.CPU(1)])
 
-    # execute all programs "concurrently"
-    # kernel.run(prg1)
-    # kernel.run(prg2)
-    # kernel.run(prg3)
+    kernel.fileSystem.write("c:/prog1.exe", prg1)
+    kernel.fileSystem.write("c:/prog2.exe", prg2)
+    kernel.fileSystem.write("c:/prog3.exe", prg3)
 
-    mm = MemoryManager(5)
-    usados = mm.allocFrames(2)
-    mm.freeFrames(usados)
+
+    # execute all programs "concurrently"
+    # kernel.run("c:/prog1.exe", 0)
+    # kernel.run("c:/prog2.exe", 1)
+    # kernel.run("c:/prog3.exe", 2)
+
+
 
 
 

@@ -417,6 +417,29 @@ class RoundRobin(Scheduler):
     def add(self, pcb):
         self.enqueue(pcb)
 
+
+class FileSystem():
+
+    def __init__(self):
+        self._files = dict()
+
+    def write(self, path, prg):
+        log.logger.info("writing file {path} with {prg}".format(path=path, prg=prg))
+        self._files[path] = prg
+
+    # retorna el archivo (o programa) asociado al path
+    def read(self, path):
+        try:
+            prg = self._files[path]
+        except:
+            prg = None
+            log.logger.info("No file found in path {}".format(path))
+
+        if not (prg is None):
+            log.logger.info("reading path {} ".format(path))
+            return prg
+
+
 class MemoryManager():
 
     def __init__(self, frameSize):
@@ -491,6 +514,8 @@ class Kernel():
         statHandler = StatInterruptionHandler(self)
         HARDWARE.interruptVector.register(STAT_INTERRUPTION_TYPE, statHandler)
 
+        self._fileSystem = FileSystem()
+
         ## controls the Hardware's I/O Device
         self._ioDeviceController = IoDeviceController(HARDWARE.ioDevice)
 
@@ -530,6 +555,10 @@ class Kernel():
     def ioDeviceController(self):
         return self._ioDeviceController
 
+    @property
+    def fileSystem(self):
+        return self._fileSystem
+
     """ Obsoleto
     def load_program(self, program):
         # loads the program in main memory
@@ -540,9 +569,9 @@ class Kernel():
     """
 
     ## emulates a "system call" for programs execution
-    # pasa la prioridad al program
-    def run(self, program, priority):
-        program.setPriority(priority)
+    def run(self, path, priority):
+        program = self._fileSystem.read(path)         # el program asociado al "path"
+        program.setPriority(priority)                 # pasa la prioridad al program
         newIRQ = IRQ(NEW_INTERRUPTION_TYPE, program)
         HARDWARE.cpu._interruptVector.handle(newIRQ)
 

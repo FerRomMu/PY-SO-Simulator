@@ -35,6 +35,10 @@ if __name__ == '__main__':
     kernel.fileSystem.write("c:/prog2.exe", prg2)
     kernel.fileSystem.write("c:/prog3.exe", prg3)
 
+    kernel.fileSystem.read("c:/prog1.exe")
+    kernel.fileSystem.read("c:/prog2.exe")
+    kernel.fileSystem.read("c:/prog3.exe")
+
 
     # execute all programs "concurrently"
     # kernel.run("c:/prog1.exe", 0)

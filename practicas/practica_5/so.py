@@ -436,7 +436,7 @@ class FileSystem():
             log.logger.info("No file found in path {}".format(path))
 
         if not (prg is None):
-            log.logger.info("reading path {} ".format(path))
+            log.logger.info("reading path: {p} ,file found: {f} ".format(p=path,f=prg))
             return prg
 
 

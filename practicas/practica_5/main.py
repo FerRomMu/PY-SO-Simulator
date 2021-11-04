@@ -18,12 +18,21 @@ if __name__ == '__main__':
 
     ## new create the Operative System Kernel
     # "booteamos" el sistema operativo
+    
+    #Settear tamaño de frames
+    frames = 5
 
-    kernel = Kernel(FCFSScheduler)
+    #Elegir scheduler: 
+    #   FCFSScheduler
+    #   PriorityScheduler(False, 0) --Poner True y un número para activar aging, puede inicializar sin parametros
+    #   PreemtivePriorityScheduler(False, 0)
+    #   RoundRobin(3) --Poner un valor de quantum para inicializar o dejarlo en 3.
+    scheduler = FCFSScheduler
+    kernel = Kernel(scheduler, frames)
 
-    mm = MemoryManager(5)
+    '''mm = MemoryManager(5)
     usados = mm.allocFrames(2)
-    mm.freeFrames(usados)
+    mm.freeFrames(usados)'''
 
     # Ahora vamos a intentar ejecutar 3 programas a la vez
     ##################

@@ -534,8 +534,6 @@ class Kernel():
         self._mm = MemoryManager(frames)
         HARDWARE.mmu.frameSize(frames)
 
-
-
     # getters para obtenerlos desde otras clases
     @property
     def loader(self):
@@ -552,7 +550,6 @@ class Kernel():
     @property
     def scheduler(self):
         return self._scheduler
-
 
     @property
     def ioDeviceController(self):

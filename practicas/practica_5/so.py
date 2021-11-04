@@ -143,7 +143,6 @@ class AbstractInterruptionHandler():
         self.kernel.pcbTable.setRunningPCB(pcb)  # establece el pcb como runningPCB
 
 
-
 class NewInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
@@ -260,6 +259,7 @@ class PCB():
     def __repr__(self):
         return "PCB {}".format(self.pid)
 
+
 class PCBTable():
 
     def __init__(self):
@@ -363,6 +363,7 @@ class Scheduler():
     def mustExpropiate(self, pcbInCPU, pcbToAdd):
         return False
 
+
 class FCFSScheduler(Scheduler):
 
     def add(self, pcb):
@@ -401,6 +402,7 @@ class PriorityScheduler(Scheduler):
     def plusAge(self, timeIn):
         ##Tick actual menos el tick desde el cual espera dividido enteramente por el tickAge
         return (HARDWARE.clock.currentTick - timeIn)//self._ticksAge
+
 
 class PreemptivePriorityScheduler(PriorityScheduler):
 
@@ -488,13 +490,10 @@ class MemoryManager():
         return len(self._freeFrames)
 
 
-
-
-
 # emulates the core of an Operative System
 class Kernel():
 
-    def __init__(self, sch):
+    def __init__(self, sch, frames):
         ## setup interruption handlers
         killHandler = KillInterruptionHandler(self)
         HARDWARE.interruptVector.register(KILL_INTERRUPTION_TYPE, killHandler)
@@ -530,6 +529,10 @@ class Kernel():
 
         # scheduler
         self._scheduler = sch
+
+        # configuración frames
+        self._mm = MemoryManager(frames)
+        HARDWARE.mmu.frameSize(frames)
 
 
 

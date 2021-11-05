@@ -149,11 +149,12 @@ class NewInterruptionHandler(AbstractInterruptionHandler):
         # carga
         path = irq.parameters[0]
         priority = irq.parameters[1]
-        prg = self._fileSystem.read(path)         # el program asociado al "path"
+        prg = self.kernel._fileSystem.read(path)         # el program asociado al "path"
         #prg.setPriority(priority)  <-no tiene sentido se pierde xq prg nunk se asigna.
         pid = self.kernel.pcbTable.getNewPID()
         pcb = PCB(pid, prg.name, priority)
-        self.kernel.loader.load(prg)    #no encontré otra manera que no haga doble lectura de memoria.
+        table = self.kernel.loader.load(prg)    #no encontré otra manera que no haga doble lectura de memoria.
+        pcb.setPageTable(table)
         self.kernel.pcbTable.add(pcb)
 
         # ejecucion
@@ -231,10 +232,13 @@ class PCB():
     def pid(self):
         return self._pid
 
-    @property
+    '''@property
     def baseDir(self):
-        return self._baseDir
-
+        return self._baseDir'''
+    @property
+    def pageTable(self):
+        return self._pageTable
+    
     @property
     def pc(self):
         return self._pc
@@ -263,7 +267,7 @@ class PCB():
         self._pageTable = pt
 
     def __repr__(self):
-        return "PCB {}".format(self.pid)
+        return "PCB {}".format(self.pageTable)
 
 
 class PCBTable():
@@ -330,12 +334,12 @@ class Loader():
         for i in range(0, progSize):
             inst = prg.instructions[i]
             if j < self._mm.frameSize:
-                HARDWARE.memory.write(j + (frames[k]*self._mm.frameSIze), inst)
+                HARDWARE.memory.write(j + (frames[k]*self._mm.frameSize), inst)
                 j += 1
             else:
                 j = 0
                 k += 1
-                HARDWARE.memory.write(frames[k]*self._mm.frameSIze, inst)
+                HARDWARE.memory.write(frames[k]*self._mm.frameSize, inst)
         return frames
 
 
@@ -344,7 +348,10 @@ class Dispatcher():
     def load(self, pcb):
         log.logger.info("Cargando PCB: {} ".format(pcb))
         HARDWARE.cpu.pc = pcb.pc
-        HARDWARE.mmu.baseDir = pcb.baseDir
+        HARDWARE.mmu.resetTLB
+        pt = pcb.pageTable
+        for i in range(0, len(pt)):
+            HARDWARE.mmu.setPageFrame(i,pt[i])
 
     def save(self, pcb):
         log.logger.info("Actualizando PCB: {} ".format(pcb))

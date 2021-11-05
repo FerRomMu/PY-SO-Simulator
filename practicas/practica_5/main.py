@@ -23,11 +23,11 @@ if __name__ == '__main__':
     frames = 5
 
     #Elegir scheduler: 
-    #   FCFSScheduler
+    #   FCFSScheduler()
     #   PriorityScheduler(False, 0) --Poner True y un número para activar aging, puede inicializar sin parametros
     #   PreemtivePriorityScheduler(False, 0)
     #   RoundRobin(3) --Poner un valor de quantum para inicializar o dejarlo en 3.
-    scheduler = FCFSScheduler
+    scheduler = FCFSScheduler()
     kernel = Kernel(scheduler, frames)
 
     '''mm = MemoryManager(5)

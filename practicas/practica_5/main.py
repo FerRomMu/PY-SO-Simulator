@@ -51,8 +51,8 @@ if __name__ == '__main__':
 
     # execute all programs "concurrently"
     kernel.run("c:/prog1.exe", 0)
-    # kernel.run("c:/prog2.exe", 1)
-    # kernel.run("c:/prog3.exe", 2)
+    kernel.run("c:/prog2.exe", 1)
+    kernel.run("c:/prog3.exe", 2)
 
 
 

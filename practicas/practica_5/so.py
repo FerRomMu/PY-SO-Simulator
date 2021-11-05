@@ -327,12 +327,11 @@ class Loader():
     def load(self, prg):
         # loads the program in main memory
         progSize = len(prg.instructions)
-        pagesNeeded = progSize // self._mm.frameSize
+        pagesNeeded = ((progSize-1) // self._mm.frameSize) + 1
         frames = self._mm.allocFrames(pagesNeeded)
         j = 0
         k = 0
-        for i in range(0, progSize):
-            inst = prg.instructions[i]
+        for inst in prg.instructions:
             if j < self._mm.frameSize:
                 HARDWARE.memory.write(j + (frames[k]*self._mm.frameSize), inst)
                 j += 1

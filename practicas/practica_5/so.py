@@ -532,7 +532,7 @@ class Kernel():
 
         # configuración frames
         self._mm = MemoryManager(frames)
-        HARDWARE.mmu.frameSize(frames)
+        HARDWARE.mmu.frameSize = frames
 
     # getters para obtenerlos desde otras clases
     @property

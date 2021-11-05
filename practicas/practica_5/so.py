@@ -147,11 +147,13 @@ class NewInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
         # carga
-        prg = irq.parameters
-        baseDir = self.kernel.loader.load(prg)
+        path = irq.parameters[0]
+        priority = irq.parameters[1]
+        prg = self._fileSystem.read(path)         # el program asociado al "path"
+        #prg.setPriority(priority)  <-no tiene sentido se pierde xq prg nunk se asigna.
         pid = self.kernel.pcbTable.getNewPID()
-        priority = prg.priority
-        pcb = PCB(pid, baseDir, prg.name, priority)
+        pcb = PCB(pid, prg.name, priority)
+        self.kernel.loader.load(prg)    #no encontré otra manera que no haga doble lectura de memoria.
         self.kernel.pcbTable.add(pcb)
 
         # ejecucion
@@ -216,9 +218,10 @@ class StatInterruptionHandler(AbstractInterruptionHandler):
 
 class PCB():
 
-    def __init__(self, pid, baseDir, path, priority):  # se inicializan siempre igual -> state, pc
+    def __init__(self, pid, path, priority):  # se inicializan siempre igual -> state, pc
         self._pid = pid
-        self._baseDir = baseDir
+        #self._baseDir = baseDir
+        self._pageTable = []
         self._pc = 0
         self._state = NEW
         self._path = path
@@ -255,6 +258,9 @@ class PCB():
 
     def setPc(self, pc):
         self._pc = pc
+    
+    def setPageTable(self, pt):
+        self._pageTable = pt
 
     def __repr__(self):
         return "PCB {}".format(self.pid)
@@ -311,17 +317,26 @@ class PCBTable():
 
 class Loader():
 
-    def __init__(self):
-        self._nextDir = 0
+    def __init__(self, mm):
+        self._mm = mm
 
     def load(self, prg):
         # loads the program in main memory
         progSize = len(prg.instructions)
-        for index in range(0, progSize):
-            inst = prg.instructions[index]
-            HARDWARE.memory.write(index + self._nextDir, inst)
-        self._nextDir += progSize
-        return self._nextDir - progSize
+        pagesNeeded = progSize // self._mm.frameSize
+        frames = self._mm.allocFrames(pagesNeeded)
+        j = 0
+        k = 0
+        for i in range(0, progSize):
+            inst = prg.instructions[i]
+            if j < self._mm.frameSize:
+                HARDWARE.memory.write(j + (frames[k]*self._mm.frameSIze), inst)
+                j += 1
+            else:
+                j = 0
+                k += 1
+                HARDWARE.memory.write(frames[k]*self._mm.frameSIze, inst)
+        return frames
 
 
 class Dispatcher():
@@ -521,9 +536,6 @@ class Kernel():
         # tabla PCB
         self._pcbTable = PCBTable()
 
-        # loader
-        self._loader = Loader()
-
         # dispatcher
         self._dispatcher = Dispatcher()
 
@@ -533,6 +545,10 @@ class Kernel():
         # configuración frames
         self._mm = MemoryManager(frames)
         HARDWARE.mmu.frameSize = frames
+
+        # loader
+        self._loader = Loader(self._mm)
+
 
     # getters para obtenerlos desde otras clases
     @property
@@ -570,9 +586,7 @@ class Kernel():
 
     ## emulates a "system call" for programs execution
     def run(self, path, priority):
-        program = self._fileSystem.read(path)         # el program asociado al "path"
-        program.setPriority(priority)                 # pasa la prioridad al program
-        newIRQ = IRQ(NEW_INTERRUPTION_TYPE, program)
+        newIRQ = IRQ(NEW_INTERRUPTION_TYPE, [path, priority])
         HARDWARE.cpu._interruptVector.handle(newIRQ)
 
     """

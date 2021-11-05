@@ -149,7 +149,7 @@ class NewInterruptionHandler(AbstractInterruptionHandler):
         # carga
         path = irq.parameters[0]
         priority = irq.parameters[1]
-        prg = self.kernel._fileSystem.read(path)         # el program asociado al "path"
+        prg = self.kernel.fileSystem.read(path)         # el program asociado al "path"
         #prg.setPriority(priority)  <-no tiene sentido se pierde xq prg nunk se asigna.
         pid = self.kernel.pcbTable.getNewPID()
         pcb = PCB(pid, prg.name, priority)
@@ -169,6 +169,8 @@ class KillInterruptionHandler(AbstractInterruptionHandler):
         pcb = self.kernel.pcbTable.runningPCB
         self.kernel.dispatcher.save(pcb)
         pcb.setState(TERMINATED)
+        pt = pcb.pageTable
+        self.kernel.memoryManager.freeFrames(pt)
         self.kernel.pcbTable.setRunningPCB(None)
 
         # siguiente ciclo de ejecución (si hay procesos en readyQueue)
@@ -267,7 +269,7 @@ class PCB():
         self._pageTable = pt
 
     def __repr__(self):
-        return "PCB {}".format(self.pageTable)
+        return "PCB {}".format(self._pid)
 
 
 class PCBTable():
@@ -577,6 +579,10 @@ class Kernel():
     def ioDeviceController(self):
         return self._ioDeviceController
 
+    @property
+    def memoryManager(self):
+        return self._mm
+    
     @property
     def fileSystem(self):
         return self._fileSystem

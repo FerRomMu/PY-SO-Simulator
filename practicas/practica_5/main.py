@@ -20,7 +20,7 @@ if __name__ == '__main__':
     # "booteamos" el sistema operativo
     
     #Settear tamaño de frames
-    frames = 5
+    frames = 4
 
     #Elegir scheduler: 
     #   FCFSScheduler()
@@ -29,10 +29,6 @@ if __name__ == '__main__':
     #   RoundRobin(3) --Poner un valor de quantum para inicializar o dejarlo en 3.
     scheduler = FCFSScheduler()
     kernel = Kernel(scheduler, frames)
-
-    '''mm = MemoryManager(5)
-    usados = mm.allocFrames(2)
-    mm.freeFrames(usados)'''
 
     # Ahora vamos a intentar ejecutar 3 programas a la vez
     ##################

@@ -149,12 +149,9 @@ class NewInterruptionHandler(AbstractInterruptionHandler):
         # carga
         path = irq.parameters[0]
         priority = irq.parameters[1]
-        prg = self.kernel.fileSystem.read(path)         # el program asociado al "path"
-        #prg.setPriority(priority)  <-no tiene sentido se pierde xq prg nunk se asigna.
         pid = self.kernel.pcbTable.getNewPID()
-        pcb = PCB(pid, prg.name, priority)
-        table = self.kernel.loader.load(prg)    #no encontré otra manera que no haga doble lectura de memoria.
-        pcb.setPageTable(table)
+        pcb = PCB(pid, path, priority)
+        self.kernel.loader.load(pcb)
         self.kernel.pcbTable.add(pcb)
 
         # ejecucion
@@ -323,25 +320,34 @@ class PCBTable():
 
 class Loader():
 
-    def __init__(self, mm):
+    def __init__(self, mm, fileSystem):
         self._mm = mm
+        self.fileSystem = fileSystem
 
-    def load(self, prg):
+    def load(self, pcb):
         # loads the program in main memory
+        prg = self.fileSystem.read(pcb.path)         # carga el programa del file system
         progSize = len(prg.instructions)
-        pagesNeeded = ((progSize-1) // self._mm.frameSize) + 1
+        frameSize = self._mm.frameSize
+        pagesNeeded = ((progSize-1) // frameSize+1)
+        log.logger.info("pages needed: {}".format(pagesNeeded))
         frames = self._mm.allocFrames(pagesNeeded)
+        pcb.setPageTable(frames)
         j = 0
         k = 0
         for inst in prg.instructions:
             if j < self._mm.frameSize:
-                HARDWARE.memory.write(j + (frames[k]*self._mm.frameSize), inst)
+                HARDWARE.memory.write(j + (frames[k] * frameSize), inst)
+                log.logger.info("page: {p} - offset: {cel} - instr: {inst}".format(cel=j + (frames[k]*frameSize),
+                                                                                          inst=inst, p=frames[k]))
                 j += 1
             else:
-                j = 0
+                j = 1
                 k += 1
-                HARDWARE.memory.write(frames[k]*self._mm.frameSize, inst)
-        return frames
+                HARDWARE.memory.write(frames[k] * frameSize, inst)
+                log.logger.info("page: {fr} - offset: {cel} - instr: {inst}".format(cel= (frames[k] * frameSize),
+                                                                                        inst=inst, fr=frames[k]))
+
 
 
 class Dispatcher():
@@ -349,7 +355,7 @@ class Dispatcher():
     def load(self, pcb):
         log.logger.info("Cargando PCB: {} ".format(pcb))
         HARDWARE.cpu.pc = pcb.pc
-        HARDWARE.mmu.resetTLB
+        HARDWARE.mmu.resetTLB()
         pt = pcb.pageTable
         for i in range(0, len(pt)):
             HARDWARE.mmu.setPageFrame(i,pt[i])
@@ -555,7 +561,7 @@ class Kernel():
         HARDWARE.mmu.frameSize = frames
 
         # loader
-        self._loader = Loader(self._mm)
+        self._loader = Loader(self._mm, self._fileSystem)
 
 
     # getters para obtenerlos desde otras clases

@@ -11,7 +11,7 @@ if __name__ == '__main__':
     log.logger.info('Starting emulator')
 
     ## setup our hardware and set memory size to 25 "cells"
-    HARDWARE.setup(30)
+    HARDWARE.setup(32)
 
     ## Switch on computer
     HARDWARE.switchOn()
@@ -40,15 +40,10 @@ if __name__ == '__main__':
     kernel.fileSystem.write("c:/prog2.exe", prg2)
     kernel.fileSystem.write("c:/prog3.exe", prg3)
 
-    kernel.fileSystem.read("c:/prog1.exe")
-    kernel.fileSystem.read("c:/prog2.exe")
-    kernel.fileSystem.read("c:/prog3.exe")
-
-
     # execute all programs "concurrently"
-    kernel.run("c:/prog1.exe", 0)
-    kernel.run("c:/prog2.exe", 1)
-    kernel.run("c:/prog3.exe", 2)
+    kernel.run("c:/prog1.exe", 1)
+    kernel.run("c:/prog2.exe", 2)
+    kernel.run("c:/prog3.exe", 3)
 
 
 

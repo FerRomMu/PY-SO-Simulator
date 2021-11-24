@@ -70,3 +70,6 @@ https://gitlab.com/so-unq-2021-s2/grupo_5/-/blob/main/practicas/practica_3/so.py
 
 ### Práctica 4: Aprobada 
 
+
+### Práctica 5: Aprobada 
+

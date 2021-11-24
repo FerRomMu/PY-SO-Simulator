@@ -73,3 +73,17 @@ https://gitlab.com/so-unq-2021-s2/grupo_5/-/blob/main/practicas/practica_3/so.py
 
 ### Práctica 5: Aprobada 
 
+##### Comentarios:
+
+https://gitlab.com/so-unq-2021-s2/grupo_5/-/blob/main/practicas/practica_5/so.py#L486
+
+La creacion de los Free Frames la  podrían hacer mas simple con un for:
+
+
+```
+        for elem  in range(0 ,cantFrames):
+            result.append(elem
+```
+)
+
+

@@ -1,20 +1,21 @@
 from hardware import *
 from so import *
+from designer import *
 import log
-
 
 ##
 ##  MAIN 
 ##
 if __name__ == '__main__':
     log.setupLogger()
-    log.logger.info('Starting emulator')
+    DESIGNER.title('Starting emulator')
 
     ## setup our hardware and set memory size to 25 "cells"
     HARDWARE.setup(32)
 
     ## Switch on computer
     HARDWARE.switchOn()
+    HARDWARE._cpu.enable_stats = True
 
     ## new create the Operative System Kernel
     # "booteamos" el sistema operativo

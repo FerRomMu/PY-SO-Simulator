@@ -135,7 +135,7 @@ class LoggerDesign():
                     t = 0
                 else:
                     t = 1
-                self._data.append([i,t,t, False])
+                self._data.append([i,t,1, False])
                 i += 1
         j = 0
         totale = 0

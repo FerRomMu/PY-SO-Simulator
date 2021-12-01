@@ -213,7 +213,7 @@ class TimeoutInterruptionHandler(AbstractInterruptionHandler):
 class StatInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
-        DESIGNER.printGantt(self.kernel.pcbTable, HARDWARE.clock.currentTick)
+        DESIGNER.printGantt(self.kernel.pcbTable, self.kernel.scheduler.readyQ, HARDWARE.clock.currentTick)
 
 
 class PCB():

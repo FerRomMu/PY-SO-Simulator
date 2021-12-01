@@ -112,15 +112,15 @@ class LoggerDesign():
 
     def actualizarAnalysis(self, table):
         sizeT = len(table.allPCBs())
-        if len(self._data) < sizeT:
-            #hay que cargar mas pcbs
-            if table.runningPCB != None:
-                pActual = table.runningPCB.pid
-            else:
-                pActual = -1
+        if table.runningPCB != None:
+            pActual = table.runningPCB.pid
+        else:
+            pActual = -1
+        if len(self._data) == sizeT:
+            #hay que actualizar info
             for proceso in self._data:
                 if not proceso[3]: ##Si aún no había terminado
-                    if table.get(proceso[0]).state == "TERMINATED": #Veo si terminó
+                    if table.getPCB(proceso[0]).state == "TERMINATED": #Veo si terminó
                         proceso[3] = True
                     else: #Si no termino actualizo data
                         if proceso[0] != pActual: ##Veo si esta esperando
@@ -131,25 +131,29 @@ class LoggerDesign():
             i = len(self._data)
             while len(self._data) < sizeT:
                 #pid, t espera, t retorno, ¿finalizo?
-                self._data.append([i,0,0, False])
+                if pActual == i:
+                    t = 0
+                else:
+                    t = 1
+                self._data.append([i,t,t, False])
                 i += 1
         j = 0
         totale = 0
         totalr = 0
         self._analysis = [self._analysis[0]]
         while j < len(self._data):
-            pid = "|" + str(self._data[j][0]).center[10]
-            tesp = "|" + str(self._data[j][1]).center[10]
-            tret = "|" + str(self._data[j][2]).center[10]
-            self._analysis.append(pid + tesp + tret)
+            pid = str(self._data[j][0]).center(10)
+            tesp = str(self._data[j][1]).center(10)
+            tret = str(self._data[j][2]).center(10)
+            self._analysis.append("|" + pid + "|" + tesp + "|" + tret + "|")
             totale += self._data[j][1]
             totalr += self._data[j][2]
             j += 1
         stotale = str(totale).center(3)
         stotalr = str(totalr).center(3)
         if j != 0:
-            pre = totale / j
-            prr = totalr / j
+            pre = totale // j
+            prr = totalr // j
         else:
             pre = 0
             prr = 0

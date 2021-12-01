@@ -316,7 +316,12 @@ class PCBTable():
 
     def allPCBs(self):
         return self._pcbTable
-
+    
+    def getPCB(self, pid):
+        i = 0
+        while self._pcbTable[i].pid != pid and not self.isEmpty():
+            i += 1
+        return self._pcbTable[i]
 
 class Loader():
 

@@ -28,7 +28,7 @@ if __name__ == '__main__':
     #   PriorityScheduler(False, 0) --Poner True y un número para activar aging, puede inicializar sin parametros
     #   PreemtivePriorityScheduler(False, 0)
     #   RoundRobin(3) --Poner un valor de quantum para inicializar o dejarlo en 3.
-    scheduler = FCFSScheduler()
+    scheduler = PriorityScheduler(True, 3)
     kernel = Kernel(scheduler, frames)
 
     # Ahora vamos a intentar ejecutar 3 programas a la vez

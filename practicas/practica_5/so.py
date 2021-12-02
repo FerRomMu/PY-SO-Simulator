@@ -413,28 +413,27 @@ class PriorityScheduler(Scheduler):
         Scheduler.__init__(self)
         self._hasAging = aging
         self._ticksAge = ticksAge
+        self._priorityDict = dict()
 
     def add(self, pcb):
         i = 0
         size = len(self._readyQ)
         while i != size and self.priorityElement(i) <= pcb.priority:
             i += 1
-        self._readyQ.insert(i, [pcb, HARDWARE.clock.currentTick]) ##Guarda el tick en el que se agrego a la lista
-
-    def getNext(self):
-        if not self.isEmptyQ():
-            return self._readyQ.pop(0)[0]
+        self._readyQ.insert(i, pcb) ##Pone el pcb en la fila
+        self._priorityDict[pcb.pid] = HARDWARE.clock.currentTick
 
     def priorityElement(self, i):
         if self._hasAging:
             ##Suma la prioridad del pcb menos el plus por tiempo en la queue
-            return self._readyQ[i][0].priority - self.plusAge(self._readyQ[i][1])
+            return self._readyQ[i].priority - self.plusAge(self._readyQ[i].pid)
         else:
             ##Ignora el tiempo en la queue
-            return self._readyQ[i][0].priority
+            return self._readyQ[i].priority
 
-    def plusAge(self, timeIn):
+    def plusAge(self, id):
         ##Tick actual menos el tick desde el cual espera dividido enteramente por el tickAge
+        timeIn = self._priorityDict[id]
         return (HARDWARE.clock.currentTick - timeIn)//self._ticksAge
 
 

@@ -488,10 +488,15 @@ class MemoryManager():
     def generateFrames(self):
         frameAmount = self._freeMemory // self._frameSize   # // es para div entera
         freeFrames = []
+        for elem  in range(0 ,frameAmount):
+            freeFrames.append(elem)
+        '''
         while frameAmount != 0:
             freeFrames.insert(0, frameAmount - 1)
             frameAmount -= 1
+        '''
         return freeFrames
+
 
     def allocFrames(self, frames):
         if self.framesAvailable() >= frames:                             # si el nr de frames está disponible

@@ -33,18 +33,31 @@ if __name__ == '__main__':
 
     # Ahora vamos a intentar ejecutar 3 programas a la vez
     ##################
+    '''
     prg1 = Program("prg1.exe", [ASM.CPU(2), ASM.IO(), ASM.CPU(3), ASM.IO(), ASM.CPU(2)])
     prg2 = Program("prg2.exe", [ASM.CPU(7)])
     prg3 = Program("prg3.exe", [ASM.CPU(4), ASM.IO(), ASM.CPU(1)])
-
+    '''
+    #Ejercicio A gantt
+    prg1= Program("prg1.exe", [ASM.CPU(4)]) #[cpu x 5, 3]
+    prg2= Program("prg2.exe", [ASM.CPU(2)]) #[cpu x 3, 5] <- tiempo llegada 2
+    prg3= Program("prg3.exe", [ASM.CPU(5)]) #[cpu x 6, 2] <- 1
+    prg4= Program("prg4.exe", [ASM.CPU(3)]) #[cpu x 4, 1] <- 1
+    '''
     kernel.fileSystem.write("c:/prog1.exe", prg1)
     kernel.fileSystem.write("c:/prog2.exe", prg2)
     kernel.fileSystem.write("c:/prog3.exe", prg3)
+    '''
+    kernel.fileSystem.write("c:/prog1.exe", prg1)
+    kernel.fileSystem.write("c:/prog2.exe", prg2)
+    kernel.fileSystem.write("c:/prog3.exe", prg3)
+    kernel.fileSystem.write("c:/prog4.exe", prg4)
 
     # execute all programs "concurrently"
     kernel.run("c:/prog1.exe", 1)
-    kernel.runWithDelay("c:/prog2.exe", 2, 4)
-    kernel.runWithDelay("c:/prog3.exe", 3, 3)
+    kernel.runWithDelay("c:/prog3.exe", 2, 1)
+    kernel.run("c:/prog4.exe", 1)
+    kernel.runWithDelay("c:/prog2.exe", 5, 1)
 
 
 

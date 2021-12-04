@@ -221,8 +221,7 @@ class PCB():
 
     def __init__(self, pid, path, priority):  # se inicializan siempre igual -> state, pc
         self._pid = pid
-        #self._baseDir = baseDir
-        self._pageTable = []
+        self._pageTable = dict()
         self._pc = 0
         self._state = NEW
         self._path = path
@@ -232,9 +231,6 @@ class PCB():
     def pid(self):
         return self._pid
 
-    '''@property
-    def baseDir(self):
-        return self._baseDir'''
     @property
     def pageTable(self):
         return self._pageTable
@@ -265,6 +261,9 @@ class PCB():
     
     def setPageTable(self, pt):
         self._pageTable = pt
+
+    def addPageToTable(self, page, frame):
+        self._pageTable[page] = frame
 
     def __repr__(self):
         return "PCB {}".format(self._pid)
@@ -330,6 +329,7 @@ class Loader():
         self._mm = mm
         self.fileSystem = fileSystem
 
+    '''
     def load(self, pcb):
         # loads the program in main memory
         prg = self.fileSystem.read(pcb.path)         # carga el programa del file system
@@ -353,8 +353,24 @@ class Loader():
                 HARDWARE.memory.write(frames[k] * frameSize, inst)
                 log.logger.info("page: {fr} - offset: {cel} - instr: {inst}".format(cel= (frames[k] * frameSize),
                                                                                         inst=inst, fr=frames[k]))
+    '''
+    def loadNextFrame(self, pcb):
+        instruccionActual = pcb.pc
+        pageToLoad = instruccionActual // self._mm.frameSize()
+        prg = self.fileSystem.read(pcb.path)
+        progSize = len(prg.instructions)
+        frameSize = self._mm.frameSize
+        
+        if True: #si hay frames disponibles (por ahora no hay Swap así que para que no rompa lo haré siempre true)
+            frame = self._mm.allocFrames(1)[0]
+        
+        for i in range(instruccionActual, instruccionActual+frameSize):
+            if i >= progSize: #Si cargo todas las instrucciones se sale
+                break
+            HARDWARE.memory.write(frame + i, prg.instructions[i])
+            log.logger.info("page: {p} - offset: {cel} - instr: {inst}".format(fr=pageToLoad, cel=i, inst=prg.instructions[i]))
 
-
+        pcb.addPageToTable(pageToLoad, frame)
 
 class Dispatcher():
 

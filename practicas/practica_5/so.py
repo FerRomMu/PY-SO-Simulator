@@ -2,6 +2,7 @@
 
 from hardware import *
 from designer import *
+from time import sleep
 import log
 
 #Estos son estados de pcb
@@ -610,6 +611,10 @@ class Kernel():
     def run(self, path, priority):
         newIRQ = IRQ(NEW_INTERRUPTION_TYPE, [path, priority])
         HARDWARE.cpu._interruptVector.handle(newIRQ)
+
+    def runWithDelay(self, path, priority, ticks):
+        sleep(ticks)
+        self.run(path, priority)
 
     """
     ## emulates a "system call" for programs execution

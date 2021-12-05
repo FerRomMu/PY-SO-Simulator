@@ -168,7 +168,7 @@ class KillInterruptionHandler(AbstractInterruptionHandler):
         self.kernel.dispatcher.save(pcb)
         pcb.setState(TERMINATED)
         pt = pcb.pageTable
-        self.kernel.memoryManager.freeFrames(pt.values)
+        self.kernel.memoryManager.freeFrames(pt.values())
         self.kernel.pcbTable.setRunningPCB(None)
 
         # siguiente ciclo de ejecución (si hay procesos en readyQueue)
@@ -338,31 +338,6 @@ class Loader():
         self._mm = mm
         self.fileSystem = fileSystem
 
-    '''
-    def load(self, pcb):
-        # loads the program in main memory
-        prg = self.fileSystem.read(pcb.path)         # carga el programa del file system
-        progSize = len(prg.instructions)
-        frameSize = self._mm.frameSize
-        pagesNeeded = ((progSize-1) // frameSize+1)
-        log.logger.info("pages needed: {}".format(pagesNeeded))
-        frames = self._mm.allocFrames(pagesNeeded)
-        pcb.setPageTable(frames)
-        j = 0
-        k = 0
-        for inst in prg.instructions:
-            if j < self._mm.frameSize:
-                HARDWARE.memory.write(j + (frames[k] * frameSize), inst)
-                log.logger.info("page: {p} - offset: {cel} - instr: {inst}".format(cel=j + (frames[k]*frameSize),
-                                                                                          inst=inst, p=frames[k]))
-                j += 1
-            else:
-                j = 1
-                k += 1
-                HARDWARE.memory.write(frames[k] * frameSize, inst)
-                log.logger.info("page: {fr} - offset: {cel} - instr: {inst}".format(cel= (frames[k] * frameSize),
-                                                                                        inst=inst, fr=frames[k]))
-    '''
     def loadNextFrame(self, pageToLoad, pcb):
         frameSize = self._mm.frameSize
         instruccionActual = pageToLoad * frameSize
@@ -375,8 +350,7 @@ class Loader():
         for i in range(0, frameSize):
             if i+instruccionActual >= progSize: #Si cargo todas las instrucciones se sale
                 break
-            HARDWARE.memory.write(frame + i, prg.instructions[instruccionActual+i])
-            log.logger.info("Se guardo en {}".format(frame+i))
+            HARDWARE.memory.write((frame*frameSize) + i, prg.instructions[instruccionActual+i])
             log.logger.info("page: {p} - offset: {cel} - instr: {inst}".format(p=pageToLoad, cel=i, inst=prg.instructions[instruccionActual+i]))
 
         pcb.addPageToTable(pageToLoad, frame)

@@ -188,9 +188,7 @@ class MMU():
         # calculamos la pagina y el offset correspondiente a la direccion logica recibida 
         pageId = logicalAddress // self._frameSize
         offset = logicalAddress % self._frameSize
-        print("page id:")
-        print(pageId)
-        print(offset)
+        log.logger.info("page: {id} - offset: {off}".format(id=pageId, off=offset))
         #
         # buscamos la direccion Base del frame donde esta almacenada la pagina
         try:
@@ -213,7 +211,7 @@ class MMU():
         ##calculamos la direccion fisica resultante
         frameBaseDir  = self._frameSize * frameId
         physicalAddress = frameBaseDir + offset
-        log.logger.info("La direccion que lee es: {}".format(physicalAddress))
+
         #
         # obtenemos la instrucción alocada en esa direccion
         return self._memory.read(physicalAddress)

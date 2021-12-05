@@ -152,7 +152,7 @@ class NewInterruptionHandler(AbstractInterruptionHandler):
         priority = irq.parameters[1]
         pid = self.kernel.pcbTable.getNewPID()
         pcb = PCB(pid, path, priority)
-        self.kernel.loader.load(pcb)
+        #self.kernel.loader.load(pcb) no debería cargar nada
         self.kernel.pcbTable.add(pcb)
 
         # ejecucion
@@ -168,7 +168,7 @@ class KillInterruptionHandler(AbstractInterruptionHandler):
         self.kernel.dispatcher.save(pcb)
         pcb.setState(TERMINATED)
         pt = pcb.pageTable
-        self.kernel.memoryManager.freeFrames(pt)
+        self.kernel.memoryManager.freeFrames(pt.values)
         self.kernel.pcbTable.setRunningPCB(None)
 
         # siguiente ciclo de ejecución (si hay procesos en readyQueue)
@@ -215,6 +215,14 @@ class StatInterruptionHandler(AbstractInterruptionHandler):
 
     def execute(self, irq):
         DESIGNER.printGantt(self.kernel.pcbTable, self.kernel.scheduler.readyQ, HARDWARE.clock.currentTick)
+
+
+class PageFaultInterruptionHandler(AbstractInterruptionHandler):
+    
+    def execute(self, irq):
+        pcb = self.kernel.pcbTable.runningPCB
+        frame = self._kernel.loader.loadNextFrame(irq.parameters, pcb)
+        HARDWARE.mmu.setPageFrame(irq.parameters, frame)
 
 
 class PCB():
@@ -323,6 +331,7 @@ class PCBTable():
             i += 1
         return self._pcbTable[i]
 
+
 class Loader():
 
     def __init__(self, mm, fileSystem):
@@ -354,23 +363,25 @@ class Loader():
                 log.logger.info("page: {fr} - offset: {cel} - instr: {inst}".format(cel= (frames[k] * frameSize),
                                                                                         inst=inst, fr=frames[k]))
     '''
-    def loadNextFrame(self, pcb):
-        instruccionActual = pcb.pc
-        pageToLoad = instruccionActual // self._mm.frameSize()
+    def loadNextFrame(self, pageToLoad, pcb):
+        frameSize = self._mm.frameSize
+        instruccionActual = pageToLoad * frameSize
         prg = self.fileSystem.read(pcb.path)
         progSize = len(prg.instructions)
-        frameSize = self._mm.frameSize
         
         if True: #si hay frames disponibles (por ahora no hay Swap así que para que no rompa lo haré siempre true)
             frame = self._mm.allocFrames(1)[0]
         
-        for i in range(instruccionActual, instruccionActual+frameSize):
-            if i >= progSize: #Si cargo todas las instrucciones se sale
+        for i in range(0, frameSize):
+            if i+instruccionActual >= progSize: #Si cargo todas las instrucciones se sale
                 break
-            HARDWARE.memory.write(frame + i, prg.instructions[i])
-            log.logger.info("page: {p} - offset: {cel} - instr: {inst}".format(fr=pageToLoad, cel=i, inst=prg.instructions[i]))
+            HARDWARE.memory.write(frame + i, prg.instructions[instruccionActual+i])
+            log.logger.info("Se guardo en {}".format(frame+i))
+            log.logger.info("page: {p} - offset: {cel} - instr: {inst}".format(p=pageToLoad, cel=i, inst=prg.instructions[instruccionActual+i]))
 
         pcb.addPageToTable(pageToLoad, frame)
+        return frame
+
 
 class Dispatcher():
 
@@ -379,8 +390,8 @@ class Dispatcher():
         HARDWARE.cpu.pc = pcb.pc
         HARDWARE.mmu.resetTLB()
         pt = pcb.pageTable
-        for i in range(0, len(pt)):
-            HARDWARE.mmu.setPageFrame(i,pt[i])
+        for key in pt:
+            HARDWARE.mmu.setPageFrame(key,pt[key])
 
     def save(self, pcb):
         log.logger.info("Actualizando PCB: {} ".format(pcb))
@@ -567,6 +578,9 @@ class Kernel():
 
         statHandler = StatInterruptionHandler(self)
         HARDWARE.interruptVector.register(STAT_INTERRUPTION_TYPE, statHandler)
+
+        pageFaultHandler = PageFaultInterruptionHandler(self)
+        HARDWARE.interruptVector.register(PAGE_FAULT_INTERRUPTION_TYPE, pageFaultHandler)
 
         self._fileSystem = FileSystem()
 

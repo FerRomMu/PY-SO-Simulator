@@ -188,9 +188,16 @@ class MMU():
         # calculamos la pagina y el offset correspondiente a la direccion logica recibida 
         pageId = logicalAddress // self._frameSize
         offset = logicalAddress % self._frameSize
+        print("page id:")
+        print(pageId)
+        print(offset)
         #
         # buscamos la direccion Base del frame donde esta almacenada la pagina
-        frameId = self._tlb[pageId]
+        try:
+            frameId = self._tlb[pageId]
+        except:
+            frameId = None
+
         if frameId is None :
             pageFaultIRQ = IRQ(PAGE_FAULT_INTERRUPTION_TYPE, pageId)
             HARDWARE.interruptVector.handle(pageFaultIRQ)
@@ -206,6 +213,7 @@ class MMU():
         ##calculamos la direccion fisica resultante
         frameBaseDir  = self._frameSize * frameId
         physicalAddress = frameBaseDir + offset
+        log.logger.info("La direccion que lee es: {}".format(physicalAddress))
         #
         # obtenemos la instrucción alocada en esa direccion
         return self._memory.read(physicalAddress)

@@ -273,6 +273,9 @@ class PCB():
     def addPageToTable(self, page, frame):
         self._pageTable[page] = frame
 
+    def removePageFromTable(self, page):
+        del self._pageTable[page]
+    
     def __repr__(self):
         return "PCB {}".format(self._pid)
 
@@ -336,24 +339,28 @@ class Loader():
 
     def __init__(self, mm, fileSystem):
         self._mm = mm
-        self.fileSystem = fileSystem
+        self._fileSystem = fileSystem
+        self._killAlgorithm = mm.killAlgorithm()
 
     def loadNextFrame(self, pageToLoad, pcb):
         frameSize = self._mm.frameSize
-        instruccionActual = pageToLoad * frameSize
-        prg = self.fileSystem.read(pcb.path)
-        progSize = len(prg.instructions)
         
-        if True: #si hay frames disponibles (por ahora no hay Swap así que para que no rompa lo haré siempre true)
-            frame = self._mm.allocFrames(1)[0]
+        #Quiero ver si esta en swap si no tengo que leer el archivo
+        if self._mm.isInSwap(pcb.pid, pageToLoad):
+            prg = self._mm.getFromSwap(pcb.pid, pageToLoad)
+        else:
+            prg = self._fileSystem.readFromTo(pcb.path, pageToLoad, frameSize)
         
-        for i in range(0, frameSize):
-            if i+instruccionActual >= progSize: #Si cargo todas las instrucciones se sale
-                break
-            HARDWARE.memory.write((frame*frameSize) + i, prg.instructions[instruccionActual+i])
-            log.logger.info("page: {p} - offset: {cel} - instr: {inst}".format(p=pageToLoad, cel=i, inst=prg.instructions[instruccionActual+i]))
+        frame = self._mm.allocFrame()
+        
+        i=0
+        for inst in prg:
+            HARDWARE.memory.write((frame*frameSize) + i, inst)
+            log.logger.info("page: {p} - offset: {cel} - instr: {instr}".format(p=pageToLoad, cel=i, instr=inst))
+            i+=1
 
         pcb.addPageToTable(pageToLoad, frame)
+        self._killAlgorithm.newFrame(pcb, pageToLoad, frame)
         return frame
 
 
@@ -476,39 +483,99 @@ class FileSystem():
             log.logger.info("reading path: {p} ,file found: {f} ".format(p=path,f=prg))
             return prg
 
+    def readFromTo(self, path, page, size):
+        try:
+            prg = self._files[path]
+        except:
+            prg = None
+            log.logger.info("No file found in path {}".format(path))
+
+        if not (prg is None):
+            firstInst = page * size
+            lastInst = firstInst + size
+            instr = prg.instructions[firstInst:lastInst]
+            log.logger.info("reading from path: {p}, instructions: {f}".format(p=path, f=instr))
+            return instr
 
 class MemoryManager():
 
-    def __init__(self, frameSize):
+    def __init__(self, frameSize, fs, killer):
+        self._fileSystem = fs
         self._frameSize = frameSize
+        self._killer = killer
+        #lista de tuplas que recuerda que pcbs tienen paginas en swap
+        #con forma (pid, pageEnSwap)
+        self._inSwap = []
+        self._swap = self.createSwap()
+        self._swapSize = HARDWARE.memory.size // 2
         self._freeMemory = HARDWARE.memory.size
         self._freeFrames = self.generateFrames()
+    
+    #SWAP ----
+    def isInSwap(self, pid, page):
+        i=0
+        while i < len(self._inSwap) and self._inSwap[i] != (pid, page):
+            i += 1
+        return i < len(self._inSwap)
+        
+    def createSwap(self):
+        self._fileSystem.write("swapFile.sys", [])
+        return "swapFile.sys"
+         
+    def getFromSwap(self, pid, page):
+        swap = self._fileSystem.read(self._swap)
+        i=0
+        while i <len(swap) and not (swap[i][0] == pid and swap[i][1] == page):
+            i+=1
+        if i<len(swap):
+            data = swap[i][2]
+            self._inSwap.pop(i)
+            swap.pop(i)
+        else:
+            raise Exception("No existe en swap: page {pag} de pcb {id}".format(pag=page, id=pid))
+        self._fileSystem.write(self._swap, swap)
+        return data
 
-
+    #FRAMES----
     # genera los frames iniciales
     def generateFrames(self):
         frameAmount = self._freeMemory // self._frameSize   # // es para div entera
         freeFrames = []
         for elem  in range(0 ,frameAmount):
-            freeFrames.append(elem)
-        '''
-        while frameAmount != 0:
-            freeFrames.insert(0, frameAmount - 1)
-            frameAmount -= 1
-        '''
+            freeFrames.append(elem)        
         return freeFrames
 
-
-    def allocFrames(self, frames):
-        if self.framesAvailable() >= frames:                             # si el nr de frames está disponible
-            allocatedFrames = self._freeFrames[:frames]                  # guarda los frames a utilizar por el proceso
-            log.logger.info("allocatedFr = {}".format(allocatedFrames))  # los muestra en pantalla
-            del self._freeFrames[:frames]                                # los saca de los frames libres
-            log.logger.info("freeFrames = {}".format(self._freeFrames))  # muestra los frames libres restantes
-            return allocatedFrames                                       # retorna los frames a utilizar
+    def allocFrame(self):
+        if self.framesAvailable() >= 1:                                  # si el nr de frames está disponible
+            allocatedFrame = self._freeFrames.pop(0)                     # guarda los frames a utilizar por el proceso
         else:
-            # si no hay frames disponibles lanza excepción
-            raise Exception("memory full: frames available = {fa}, required frames = {fr}".format(fa=self.framesAvailable(), fr=frames))
+            swap= self._fileSystem.read(self._swap)
+            #hay suficiente espacio en swap
+            if len(swap) < self._swapSize:
+                #Obtiene el pcb y page del frame a matar
+                toKill = self._killer.nextToKill()
+                #crea una tuple que tenga la data para el swap (pid, page, data)
+                frameToKill = (toKill[0].pid, toKill[1], self.dataToKill(toKill[2]))
+                #guarda en el swap y al in swap, luego actualiza el archivo swap
+                swap.append(frameToKill)
+                self._inSwap.append((frameToKill[0], frameToKill[1]))
+                self._fileSystem.write(self._swap, swap)
+                #liberado el frame, lo guarda para retornarlo
+                allocatedFrame = toKill[2]
+                log.logger.info("Swap needed")
+            else:
+                # si no hay frames disponibles y no hay espacio en swap lanza excepción
+                raise Exception("memory full: frames available = {fa}, required frames = {fr}".format(fa=self.framesAvailable(), fr=frames))
+        log.logger.info("allocatedFr = {}".format(allocatedFrame))   # los muestra en pantalla
+        log.logger.info("freeFrames = {}".format(self._freeFrames))   # muestra los frames libres restantes
+        return allocatedFrame                                       # retorna los frames a utilizar
+
+    def dataToKill(self, frame):
+        data = []
+        for i in range(self._frameSize):
+            direccion = frame * self._frameSize + i
+            data.append(HARDWARE.memory.read(direccion))
+        return data
 
     def freeMemory(self):
         return self._freeFrames * self._frameSize
@@ -528,12 +595,32 @@ class MemoryManager():
 
     def framesAvailable(self):
         return len(self._freeFrames)
+    
+    #killer
+    def killAlgorithm(self):
+        return self._killer
+
+
+class KillAlgorithm():
+
+    def __init__(self):
+        self._orderPcb = []
+    
+    def newFrame(self, pcb, page, frame):
+        self._orderPcb.append((pcb, page, frame))
+
+class KillFifo(KillAlgorithm):
+
+    def nextToKill(self):
+        toKill = self._orderPcb.pop(0)
+        toKill[0].removePageFromTable(toKill[1])
+        return toKill
 
 
 # emulates the core of an Operative System
 class Kernel():
 
-    def __init__(self, sch, frames):
+    def __init__(self, sch, frames, killer):
         ## setup interruption handlers
         killHandler = KillInterruptionHandler(self)
         HARDWARE.interruptVector.register(KILL_INTERRUPTION_TYPE, killHandler)
@@ -571,7 +658,7 @@ class Kernel():
         self._scheduler = sch
 
         # configuración frames
-        self._mm = MemoryManager(frames)
+        self._mm = MemoryManager(frames, self._fileSystem, killer)
         HARDWARE.mmu.frameSize = frames
 
         # loader
@@ -607,15 +694,6 @@ class Kernel():
     def fileSystem(self):
         return self._fileSystem
 
-    """ Obsoleto
-    def load_program(self, program):
-        # loads the program in main memory
-        progSize = len(program.instructions)
-        for index in range(0, progSize):
-            inst = program.instructions[index]
-            HARDWARE.memory.write(index, inst)
-    """
-
     ## emulates a "system call" for programs execution
     def run(self, path, priority):
         newIRQ = IRQ(NEW_INTERRUPTION_TYPE, [path, priority])
@@ -624,17 +702,6 @@ class Kernel():
     def runWithDelay(self, path, priority, ticks):
         sleep(ticks)
         self.run(path, priority)
-
-    """
-    ## emulates a "system call" for programs execution
-    def run(self, program):
-        self.load_program(program)
-        log.logger.info("\n Executing program: {name}".format(name=program.name))
-        log.logger.info(HARDWARE)
-
-        # set CPU program counter at program's first intruction
-        HARDWARE.cpu.pc = 0
-    """
 
     def __repr__(self):
         return "Kernel "

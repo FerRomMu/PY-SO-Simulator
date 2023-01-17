@@ -28,7 +28,7 @@ if __name__ == '__main__':
     #   PriorityScheduler(False, 0) --Poner True y un número para activar aging, puede inicializar sin parametros
     #   PreemtivePriorityScheduler(False, 0)
     #   RoundRobin(3) --Poner un valor de quantum para inicializar o dejarlo en 3.
-    scheduler = RoundRobin(3)
+    scheduler = FCFSScheduler()
     killAlgorithm = KillFifo()
     kernel = Kernel(scheduler, frames, killAlgorithm)
 
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     #esta sucesión ejecuta el ejercicio A de la guia de Gantt (cabe destacar que por el orden de ejecución los pid no se corresponden
     # al número del programa y por lo tanto el gantt tendra desordenados los renglones respectos a la guia)
     kernel.run("c:/prog1.exe", 1)
-    kernel.runWithDelay("c:/prog3.exe", 2, 1)
-    kernel.run("c:/prog4.exe", 1)
-    kernel.run("c:/prog2.exe", 5)
+    kernel.runWithDelay("c:/prog2.exe", 2, 1)
+    kernel.run("c:/prog3.exe", 1)
+    kernel.run("c:/prog4.exe", 5)
 

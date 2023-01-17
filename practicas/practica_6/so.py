@@ -272,9 +272,14 @@ class PCB():
 
     def addPageToTable(self, page, frame):
         self._pageTable[page] = frame
+        for page in self._pageTable:
+            log.logger.info("Page {pag} in frame: {fr}".format(pag=page, fr=self._pageTable[page]))
 
     def removePageFromTable(self, page):
         del self._pageTable[page]
+        log.logger.info("Se debería haber eliminado la page {pag}".format(pag=page))
+        for pg in self._pageTable:
+            log.logger.info("La pagina es {pag} y esta en el frame {fr}".format(pag=pg, fr=self._pageTable[pg]))
     
     def __repr__(self):
         return "PCB {}".format(self._pid)
